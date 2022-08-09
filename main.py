@@ -1,18 +1,17 @@
 import os
-from apscheduler.schedulers.blocking import BlockingScheduler
 import random
 import tweepy
 from translator import translate_to_spanish
 from trivia import Trivia
 from dotenv import load_dotenv
 load_dotenv()
-sched = BlockingScheduler()
 
 todays_trivia = Trivia()
 question = todays_trivia.random_question()
 right_answer = todays_trivia.correct_answer()
 wrong_answers = todays_trivia.incorrect_answers()
 answers = todays_trivia.multiple_options
+generic_url = "https://twitter.com/PyTriviaBOT/status/"
 
 
 def twepy():
@@ -41,24 +40,27 @@ def format_answer(correct_answer=right_answer):
 """
 
 
-@sched.scheduled_job("interval", minutes=5)
 def question_tweet():
     return twepy().update_status(format_trivia())
 
 
-@sched.scheduled_job("interval", minutes=6)
-def answer_tweet():
-    return twepy().update_status(format_answer())
+def answer_tweet(id):
+    return twepy().update_status(format_answer(), in_reply_to_status_id=id)
 
 
-@sched.scheduled_job("interval", minutes=5)
 def esp_question_tweet():
     return twepy().update_status(translate_to_spanish(format_trivia()))
 
 
-@sched.scheduled_job("interval", minutes=6)
-def esp_answer_tweet():
-    return twepy().update_status(translate_to_spanish(format_answer()))
+def esp_answer_tweet(id):
+    return twepy().update_status(translate_to_spanish(format_answer()), in_reply_to_status_id=id)
 
 
-sched.start()
+if __name__ == "__main__":
+    question_tweet()
+    for tweet in tweepy.Cursor(twepy().home_timeline, result_type="recent").items(1):
+        answer_tweet(tweet._json["id"])
+
+    esp_question_tweet()
+    for tweet in tweepy.Cursor(twepy().home_timeline, result_type="recent").items(1):
+        esp_answer_tweet(tweet._json["id"])
