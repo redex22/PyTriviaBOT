@@ -1,11 +1,12 @@
 import os
+from apscheduler.schedulers.blocking import BlockingScheduler
 import random
 import tweepy
 from translator import translate_to_spanish
 from trivia import Trivia
 from dotenv import load_dotenv
 load_dotenv()
-
+sched = BlockingScheduler()
 
 todays_trivia = Trivia()
 question = todays_trivia.random_question()
@@ -40,24 +41,24 @@ def format_answer(correct_answer=right_answer):
 """
 
 
+@sched.scheduled_job("interval", minutes=5)
 def question_tweet():
     return twepy().update_status(format_trivia())
 
 
+@sched.scheduled_job("interval", minutes=6)
 def answer_tweet():
     return twepy().update_status(format_answer())
 
 
+@sched.scheduled_job("interval", minutes=5)
 def esp_question_tweet():
     return twepy().update_status(translate_to_spanish(format_trivia()))
 
 
+@sched.scheduled_job("interval", minutes=6)
 def esp_answer_tweet():
     return twepy().update_status(translate_to_spanish(format_answer()))
 
 
-if __name__ == "__main__":
-    question_tweet()
-    answer_tweet()
-    esp_question_tweet()
-    esp_answer_tweet()
+sched.start()
