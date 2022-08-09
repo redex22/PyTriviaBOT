@@ -57,5 +57,7 @@ def esp_answer_tweet():
 
 
 if __name__ == "__main__":
-    print(format_trivia())
-    print(format_answer())
+    question_tweet()
+    answer_tweet()
+    esp_question_tweet()
+    esp_answer_tweet()

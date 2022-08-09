@@ -1,5 +1,4 @@
 import requests
-import random
 
 
 class Trivia:
@@ -24,12 +23,3 @@ class Trivia:
                 cls.multiple_options.append(option)
             return attribute["incorrectAnswers"]
 
-
-if __name__ == "__main__":
-    #print(Trivia)
-    print(Trivia.random_question())
-    print(Trivia.correct_answer())
-    print(Trivia.incorrect_answers())
-    print(Trivia.multiple_options)
-    randQ = random.sample(Trivia.multiple_options, len(Trivia.multiple_options))
-    print(randQ)
