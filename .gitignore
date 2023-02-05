@@ -2,3 +2,6 @@ test.py
 triviaScraping.py
 venv/
 .env
+__pycache__/
+.idea/
+
