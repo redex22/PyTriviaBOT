@@ -1,28 +1,16 @@
-import os
-import random
-import tweepy
+from random import sample
+from tweepy import Cursor, API
 from translator import translate_to_spanish
+from TweepyHandler import tweet_api
 from trivia import Trivia
-from dotenv import load_dotenv
-load_dotenv()
-
-todays_trivia = Trivia()
-question = todays_trivia.random_question()
-right_answer = todays_trivia.correct_answer()
-wrong_answers = todays_trivia.incorrect_answers()
-answers = todays_trivia.multiple_options
-generic_url = "https://twitter.com/PyTriviaBOT/status/"
 
 
-def twepy():
-    auth = tweepy.OAuthHandler(os.getenv("CONSUMER_KEY"), os.getenv("CONSUMER_SECRET"))
-    auth.set_access_token(os.getenv("ACCESS_TOKEN"), os.getenv("ACCESS_TOKEN_SECRET"))
-    api = tweepy.API(auth)
-    return api
+TODAY_TRIVIA = Trivia()
+TWEET_API = tweet_api()
 
 
-def format_trivia(question=question, multiple_options=answers):
-    multiple_options = random.sample(multiple_options, len(multiple_options))
+def question_tweet_format(answers: list[str], question: str) -> str:
+    multiple_options = sample(answers, len(answers))
     return f"""Today trivia question is:
 {question}
 And the options are:
@@ -33,34 +21,44 @@ And the options are:
 """
 
 
-def format_answer(correct_answer=right_answer):
+def answer_tweet_format(correct_answer: str) -> str:
     return f"""And the answer to today trivia is (drums please!):
 ....
 {correct_answer}
 """
 
 
-def question_tweet():
-    return twepy().update_status(format_trivia())
+def question_tweet(api: API, tweet: str):
+    return api.update_status(tweet)
 
 
-def answer_tweet(id):
-    return twepy().update_status(format_answer(), in_reply_to_status_id=id)
+def answer_tweet(api: API, tweet: str, tweet_id: str):
+    return api.update_status(tweet, in_reply_to_status_id=tweet_id)
 
 
-def esp_question_tweet():
-    return twepy().update_status(translate_to_spanish(format_trivia()))
+def last_tweet_id(api: API):
+    for tweet in Cursor(api.home_timeline, result_type="recent").items(1):
+        return tweet._json["id"]
 
 
-def esp_answer_tweet(id):
-    return twepy().update_status(translate_to_spanish(format_answer()), in_reply_to_status_id=id)
+def main():
+    try:
+        global TODAY_TRIVIA
+        eng_question = question_tweet_format(list(TODAY_TRIVIA.get_answers()), TODAY_TRIVIA.random_question())
+        esp_question = translate_to_spanish(eng_question)
+        eng_answer = answer_tweet_format(TODAY_TRIVIA.correct_answer())
+        esp_answer = translate_to_spanish(eng_answer)
+
+        question_tweet(TWEET_API, eng_question)
+        answer_tweet(TWEET_API, eng_answer, last_tweet_id(TWEET_API))
+
+        question_tweet(TWEET_API, esp_question)
+        answer_tweet(TWEET_API, esp_answer, last_tweet_id(TWEET_API))
+    except Exception as e:
+        TODAY_TRIVIA = Trivia()
+        main()
+        pass
 
 
 if __name__ == "__main__":
-    question_tweet()
-    for tweet in tweepy.Cursor(twepy().home_timeline, result_type="recent").items(1):
-        answer_tweet(tweet._json["id"])
-
-    esp_question_tweet()
-    for tweet in tweepy.Cursor(twepy().home_timeline, result_type="recent").items(1):
-        esp_answer_tweet(tweet._json["id"])
+    main()

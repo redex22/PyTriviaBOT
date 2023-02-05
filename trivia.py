@@ -2,24 +2,32 @@ import requests
 
 
 class Trivia:
-    attributes = requests.get("https://the-trivia-api.com/api/questions").json()
-    multiple_options = []
 
-    @classmethod
-    def random_question(cls):
-        for attribute in cls.attributes:
-            return attribute["question"]
+    def __init__(self):
+        self._first_trivia = requests.get("https://the-trivia-api.com/api/questions").json()[0]
+        self._answers = set()
+        self.correct_answer()
+        self.wrong_answers()
 
-    @classmethod
-    def correct_answer(cls):
-        for attribute in cls.attributes:
-            cls.multiple_options.append(attribute["correctAnswer"])
-            return attribute["correctAnswer"]
+    def random_question(self):
+        return self._first_trivia["question"]
 
-    @classmethod
-    def incorrect_answers(cls):
-        for attribute in cls.attributes:
-            for option in attribute["incorrectAnswers"]:
-                cls.multiple_options.append(option)
-            return attribute["incorrectAnswers"]
+    def correct_answer(self):
+        self._answers.add(self._first_trivia["correctAnswer"])
+        return self._first_trivia["correctAnswer"]
 
+    def wrong_answers(self):
+        incorrect_answ = [option for option in self._first_trivia["incorrectAnswers"]]
+        self._answers.update(incorrect_answ)
+        return self._first_trivia["incorrectAnswers"]
+
+    def get_answers(self):
+        return self._answers
+
+
+if __name__ == "__main__":
+    recent_trivia = Trivia()
+    print(recent_trivia.random_question())
+    print(recent_trivia.correct_answer())
+    print(recent_trivia.wrong_answers())
+    print(f"Question: {recent_trivia.random_question()}\nAnswers: {', '.join(recent_trivia.get_answers()).rstrip()}")

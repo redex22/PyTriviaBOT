@@ -6,3 +6,6 @@ def translate_to_spanish(string):
     translation = translator.translate(string)
     return translation
 
+
+if __name__ == "__main__":
+    pass
